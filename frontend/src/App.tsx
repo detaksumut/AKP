@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import SetupPage from './pages/SetupPage';
+import SerialNumberAuth from './components/SerialNumberAuth';
 import { motion } from 'motion/react';
 import { UIProvider } from './contexts/UIContext';
 
@@ -41,9 +42,18 @@ export default function App() {
   });
   const [loading, setLoading] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
+  
+  // State untuk mengecek apakah nomor seri sudah dimasukkan
+  const [hasLicense, setHasLicense] = useState<boolean>(() => {
+    return localStorage.getItem('akp_license_active') === 'true';
+  });
 
   // logout function is now empty or removed, but we keep it to not break Nav props if passed
   const logout = () => {};
+
+  if (!hasLicense) {
+    return <SerialNumberAuth onValidSerial={() => setHasLicense(true)} />;
+  }
 
   if (loading) {
     return (
