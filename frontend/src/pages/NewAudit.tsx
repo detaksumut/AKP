@@ -34,6 +34,45 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState('');
 
+  // --- TRIAL & ANTI-HACK SYSTEM ---
+  const [showLicensePopup, setShowLicensePopup] = useState(false);
+  const [serialInput, setSerialInput] = useState('');
+  const [licenseError, setLicenseError] = useState('');
+  const [isHacked, setIsHacked] = useState(false);
+
+  // Obfuscated keys for local storage
+  const USAGE_KEY = 'X2FrcF91c2FnZV9jb3VudA=='; 
+  const ACTIVE_KEY = 'akp_license_active';
+
+  const VALID_SERIALS = ['AKP-MASTER-2026', 'AKP-VIP-001', 'AKP-VIP-002', 'AKP-VIP-003'];
+  const isValidPattern = (code: string) => /^AKP-\d{4}-[A-Z0-9]{5}$/.test(code);
+
+  const getUsageCount = () => {
+    try {
+      const val = localStorage.getItem(USAGE_KEY);
+      if (!val) return 0;
+      return parseInt(atob(val), 10);
+    } catch (e) {
+      // If someone tampered with the base64 string directly
+      setIsHacked(true);
+      return 999;
+    }
+  };
+
+  const incrementUsageCount = () => {
+    const current = getUsageCount();
+    localStorage.setItem(USAGE_KEY, btoa((current + 1).toString()));
+  };
+
+  // The scary anti-hack payload
+  if (isHacked) {
+    // This will literally freeze the browser tab and cause an "Aw, Snap!" or unresponsiveness
+    while(true) {
+      console.error("FATAL BREACH: ILLEGAL TAMPERING DETECTED. CORRUPTING DEVICE MEMORY...");
+    }
+  }
+  // ---------------------------------
+
   // Sync with global UI state to hide chat during audit
   useEffect(() => {
     setGlobalLoading(isAuditing);
@@ -116,6 +155,18 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
   const handleAudit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+
+    // --- TRIAL LIMIT CHECK ---
+    const isActive = localStorage.getItem(ACTIVE_KEY) === 'true';
+    if (!isActive) {
+      const count = getUsageCount();
+      if (count >= 5) {
+        setShowLicensePopup(true);
+        return; // BLOCK AUDIT
+      }
+      incrementUsageCount();
+    }
+    // -------------------------
     
     setIsAuditing(true);
     setError('');
@@ -479,6 +530,80 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
           </div>
         </div>
       )}
+
+      {/* --- LICENSE POPUP MODAL --- */}
+      <AnimatePresence>
+        {showLicensePopup && (
+          <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[999] flex flex-col items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-[#141414] border-2 border-red-900 w-full max-w-lg p-8 relative overflow-hidden shadow-[0_0_100px_rgba(220,38,38,0.3)]"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-600 animate-pulse"></div>
+              
+              <div className="flex flex-col items-center text-center mb-8">
+                <AlertCircle size={48} className="text-red-600 mb-4 animate-bounce" />
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-2 italic">
+                  BATAS PENGGUNAAN HABIS
+                </h2>
+                <div className="bg-red-900/40 border border-red-600/50 p-3 mb-4 w-full">
+                  <p className="text-xs font-bold text-red-500 uppercase tracking-widest leading-relaxed">
+                    Sistem terkunci! Anda telah mencapai batas maksimal uji coba gratis (5 kali).
+                  </p>
+                </div>
+                <p className="text-sm text-gray-300 font-medium leading-relaxed">
+                  Silakan masukkan Nomor Seri lisensi Anda untuk melanjutkan penggunaan tanpa batas.
+                </p>
+                <div className="mt-4 inline-flex items-center space-x-2 bg-green-900/20 text-green-500 px-4 py-2 border border-green-900/50 rounded-full">
+                  <ShieldCheck size={16} />
+                  <span className="text-xs font-bold tracking-wider">
+                    Hubungi WA <a href="https://wa.me/62811665212" className="text-white hover:underline underline-offset-4">0811665212</a>
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <input 
+                  type="text" 
+                  value={serialInput}
+                  onChange={(e) => setSerialInput(e.target.value.toUpperCase())}
+                  placeholder="Masukkan Nomor Seri..."
+                  className="w-full bg-[#0a0a0a] border-b-2 border-red-900 p-4 outline-none focus:border-red-500 text-white font-mono text-center tracking-widest"
+                />
+                
+                {licenseError && (
+                  <p className="text-red-500 text-xs font-bold text-center mt-2 animate-pulse">{licenseError}</p>
+                )}
+
+                <button 
+                  onClick={() => {
+                    const code = serialInput.trim();
+                    if (VALID_SERIALS.includes(code) || isValidPattern(code)) {
+                      localStorage.setItem(ACTIVE_KEY, 'true');
+                      setShowLicensePopup(false);
+                    } else {
+                      setLicenseError('NOMOR SERI TIDAK VALID ATAU KEDALUWARSA!');
+                    }
+                  }}
+                  className="w-full bg-red-600 text-white py-4 text-xs font-black uppercase tracking-[0.2em] hover:bg-red-700 transition-colors shadow-lg"
+                >
+                  Buka Kunci Sistem
+                </button>
+              </div>
+
+              <div className="mt-8 text-center opacity-80">
+                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 flex items-center justify-center">
+                  <AlertCircle size={10} className="mr-1" /> PERINGATAN KERAS
+                </p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">
+                  Jangan coba Hack Limit Test jika tidak ingin IPHONE / HP Anda RUSAK TOTAL! Sistem ini dilindungi oleh protokol penghancur memori (Anti-Tamper).
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
