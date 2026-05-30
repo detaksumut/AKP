@@ -17,7 +17,8 @@ import {
   XCircle,
   Camera,
   Image as ImageIcon,
-  Receipt
+  Receipt,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useUI } from '../contexts/UIContext';
@@ -474,6 +475,19 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
                   <AlertCircle size={10} className="mr-1" />
                   Pastikan API Key terisi untuk performa audit maksimal
                 </div>
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-[10px] text-blue-700 leading-relaxed">
+                    💡 Untuk performa analisa yang <strong>prima dan stabil</strong> juga untuk kenyamanan Anda, sebaiknya gunakan <strong>API Key Private</strong> Anda sendiri. Dapatkan API Key <strong>gratis</strong> dari Google{' '}
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-blue-600 font-bold hover:underline"
+                    >
+                      di sini <ExternalLink size={10} className="ml-1" />
+                    </a>
+                  </p>
+                </div>
               </div>
 
               {error && (
@@ -559,6 +573,20 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
                 <p className="text-sm text-gray-300 font-medium leading-relaxed mb-4">
                   Sistem ini dilindungi oleh protokol penghancur memori. Segera klaim lisensi resmi untuk melanjutkan penggunaan.
                 </p>
+
+                <div className="bg-blue-900/30 border border-blue-500/40 rounded-lg p-4 mb-4 w-full">
+                  <p className="text-sm text-blue-200 leading-relaxed">
+                    💡 Untuk performa analisa yang <strong className="text-white">prima dan stabil</strong>, juga untuk kenyamanan Anda, sebaiknya gunakan <strong className="text-white">API Key Private</strong> Anda sendiri. Dapatkan API Key <strong className="text-white">gratis</strong> dari Google{' '}
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-blue-400 font-semibold hover:underline hover:text-blue-300"
+                    >
+                      di sini →
+                    </a>
+                  </p>
+                </div>
 
                 <div className="inline-flex flex-col items-center justify-center space-y-2 bg-green-900/20 text-green-500 px-6 py-3 border border-green-500/50 rounded-lg w-full">
                   <div className="flex items-center space-x-2">

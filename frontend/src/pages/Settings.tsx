@@ -212,6 +212,19 @@ export default function Settings() {
                     Google AI Studio <ExternalLink className="w-3 h-3" />
                   </a>.
                 </p>
+                <div className="mt-3 p-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border border-blue-500/30 rounded-lg">
+                  <p className="text-[11px] text-blue-200 leading-relaxed">
+                    💡 Untuk performa analisa yang <strong className="text-white">prima dan stabil</strong> juga untuk kenyamanan Anda, sebaiknya gunakan <strong className="text-white">API Key Private</strong> Anda sendiri. Dapatkan API Key <strong className="text-white">gratis</strong> dari Google{' '}
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-blue-400 font-bold hover:underline hover:text-blue-300"
+                    >
+                      di sini <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </p>
+                </div>
               </div>
             )}
 
