@@ -1,0 +1,15 @@
+const fs = require('fs');
+let c = fs.readFileSync('./src/components/AuthPage.tsx', 'utf8');
+c = c.replace(/\{t\('auth\.subtitle'\)\}/g, 'PORTAL AUTENTIKASI');
+c = c.replace(/t\('auth\.loginTitle'\)/g, '"Masuk ke"');
+c = c.replace(/t\('auth\.registerTitle'\)/g, '"Daftar ke"');
+c = c.replace(/t\('auth\.name'\)/g, '"Nama Lengkap"');
+c = c.replace(/t\('auth\.phone'\)/g, '"Nomor Telepon"');
+c = c.replace(/t\('auth\.password'\)/g, '"Kata Sandi"');
+c = c.replace(/t\('auth\.submitLogin'\)/g, '"Masuk"');
+c = c.replace(/t\('auth\.submitRegister'\)/g, '"Daftar"');
+c = c.replace(/t\('auth\.noAccount'\)/g, '"Belum punya akun?"');
+c = c.replace(/t\('auth\.hasAccount'\)/g, '"Sudah punya akun?"');
+c = c.replace(/t\('auth\.registerLink'\)/g, '"Daftar sekarang"');
+c = c.replace(/t\('auth\.loginLink'\)/g, '"Masuk di sini"');
+fs.writeFileSync('./src/components/AuthPage.tsx', c);

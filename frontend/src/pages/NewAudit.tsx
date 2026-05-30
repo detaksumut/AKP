@@ -1,0 +1,484 @@
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { UserProfile, AuditType } from '../types';
+import { auditPolicyOrProcurement } from '../lib/gemini';
+import { ApiService } from '../services/api.service';
+import { 
+  Search, 
+  Cpu, 
+  ShieldCheck, 
+  AlertCircle,
+  Loader2,
+  FileText,
+  Hammer,
+  Link as LinkIcon,
+  Upload,
+  CheckCircle2,
+  XCircle,
+  Camera,
+  Image as ImageIcon,
+  Receipt
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useUI } from '../contexts/UIContext';
+
+type SourceType = 'manual' | 'url' | 'pdf' | 'photo';
+
+export default function NewAudit({ profile }: { profile: UserProfile }) {
+  const { setGlobalLoading } = useUI();
+  const [input, setInput] = useState('');
+  const [url, setUrl] = useState('');
+  const [sourceType, setSourceType] = useState<SourceType>('manual');
+  const [type, setType] = useState<AuditType>('policy');
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [error, setError] = useState('');
+
+  // Sync with global UI state to hide chat during audit
+  useEffect(() => {
+    setGlobalLoading(isAuditing);
+  }, [isAuditing, setGlobalLoading]);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  const setExtractedInput = (data: any) => {
+    if (typeof data === 'string') {
+      setInput(data);
+    } else if (data && typeof data === 'object') {
+      setInput(data.content || data.text || data.extractedText || JSON.stringify(data));
+    } else {
+      setInput('');
+    }
+  };
+
+  const handleUrlFetch = async () => {
+    if (!url) return;
+    setIsExtracting(true);
+    setError('');
+    try {
+      const data = await ApiService.scrape(url);
+      setExtractedInput(data);
+    } catch (err: any) {
+      setError('Gagal menarik data dari URL. Pastikan link dapat diakses publik.');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(selectedFile.type)) {
+      setError('Hanya file gambar (JPG, PNG, WEBP) yang didukung.');
+      return;
+    }
+
+    setPhoto(selectedFile);
+    setIsExtracting(true);
+    setError('');
+
+    try {
+      const data = await ApiService.extractImage(selectedFile);
+      setExtractedInput(data);
+    } catch (err: any) {
+      setError(err.message || 'Gagal mengekstrak teks dari foto. Pastikan pencahayaan cukup dan teks terbaca jelas.');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    if (selectedFile.type !== 'application/pdf') {
+      setError('Hanya file PDF yang didukung.');
+      return;
+    }
+
+    setFile(selectedFile);
+    setIsExtracting(true);
+    setError('');
+
+    try {
+      const data = await ApiService.extractPdf(selectedFile);
+      setExtractedInput(data);
+    } catch (err: any) {
+      setError(err.message || 'Gagal mengekstrak teks dari PDF. Coba gunakan PDF berbasis teks (bukan scan).');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleAudit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    setIsAuditing(true);
+    setError('');
+
+    try {
+      let photoBase64 = '';
+      if (photo) {
+        const reader = new FileReader();
+        photoBase64 = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(photo);
+        });
+      }
+
+      const result = await ApiService.audit(input, type);
+      
+      if (!result) {
+        throw new Error('Analisa gagal menghasilkan data. Silakan coba lagi.');
+      }
+
+      console.log("Audit result from AI:", result);
+
+      const auditData = {
+        title: result.title || 'Audit Baru',
+        input_text: input,
+        audit_type: type,
+        summary: result.summary || result.findings?.summary || '',
+        fullReport: result.fullReport || '',
+        image_url: photoBase64,
+        findings: {
+          summary: result.findings?.summary || result.summary || '',
+          sections: result.findings?.sections || result.sections || {}
+        },
+        sections: result.findings?.sections || result.sections || {},
+        findingsList: result.findingsList || result.findings_list || [],
+        score: result.score || result.marwah_score || 0,
+        riskLevel: result.riskLevel || result.integrity_status || 'NOT RATED',
+        constitutionReferences: result.constitutionReferences || result.constitution_references || [],
+        investigationLeads: result.investigationLeads || result.investigation_leads || [],
+        author_id: profile.uid,
+        status: 'published'
+      };
+
+      try {
+        const response = await ApiService.saveAudit(auditData);
+        if (response && response.id) {
+          navigate(`/audit/${response.id}`);
+        } else {
+          throw new Error("Gagal menyimpan ke database lokal.");
+        }
+      } catch (err: any) {
+        console.error("Save Audit Error:", err);
+        setError(`DATABASE ERROR: ${err.message || 'Gagal menyimpan hasil.'}`);
+      }
+    } catch (err: any) {
+      console.error("Audit AI Error:", err);
+      setError(`INTELLIGENCE ERROR: ${err.message || 'Gagal melakukan audit.'}`);
+    } finally {
+      setIsAuditing(false);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-16">
+      <header className="mb-12 text-center">
+        <div className="inline-flex items-center justify-center p-3 bg-red-100 rounded-full mb-6">
+          <Hammer className="text-red-700 h-8 w-8" />
+        </div>
+        <h1 className="text-4xl font-black uppercase tracking-tighter italic">Eksekusi <span className="text-red-600">Audit Konsitusi</span></h1>
+        <p className="text-gray-500 mt-2 font-medium">Injeksi data multimoda untuk analisa integritas publik.</p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+        {/* Sidebar Controls */}
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-2">1. Sumber Input</h3>
+            <div className="space-y-2">
+              {[
+                { id: 'manual', label: 'Copy-Paste', icon: FileText },
+                { id: 'url', label: 'Link Berita', icon: LinkIcon },
+                { id: 'pdf', label: 'Upload PDF', icon: Upload },
+                { id: 'photo', label: 'Upload Foto', icon: Camera },
+              ].map((src) => (
+                <button
+                  key={src.id}
+                  onClick={() => setSourceType(src.id as SourceType)}
+                  className={`w-full p-4 flex items-center space-x-3 transition-all border-2 ${
+                    sourceType === src.id 
+                      ? 'border-[#141414] bg-[#141414] text-white' 
+                      : 'border-transparent text-gray-400 hover:bg-gray-100'
+                  }`}
+                >
+                  <src.icon size={18} />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">{src.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4 px-2">2. Fokus Analisa</h3>
+            <div className="space-y-4">
+              {[
+                { 
+                  id: 'policy', 
+                  label: 'Audit Kebijakan & UU', 
+                  description: 'Analisa konstitusionalitas perundang-undangan dan dampak sosial kebijakan publik.',
+                  icon: ShieldCheck 
+                },
+                { 
+                  id: 'procurement', 
+                  label: 'Audit Pengadaan (PBJP)', 
+                  description: 'Audit teknis tender, HPS, vendor integrity, dan potensi mark-up pengadaan barang/jasa.',
+                  icon: Search 
+                },
+                { 
+                  id: 'rab', 
+                  label: 'Audit RAB & Dokumen Tender', 
+                  description: 'Audit forensik item RAB, komparasi harga wajar SSH/HSPK, rekonsiliasi BoQ, dan verifikasi dokumen pelaksana lelang.',
+                  icon: Receipt 
+                },
+                { 
+                  id: 'news_investigation', 
+                  label: 'Investigasi Jurnalistik', 
+                  description: 'Eksplorasi narasi tersembunyi dan indikasi oligarki dalam berita atau laporan.',
+                  icon: Cpu 
+                },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setType(t.id as AuditType)}
+                  className={`w-full p-4 flex flex-col text-left transition-all border-2 ${
+                    type === t.id 
+                      ? 'border-red-600 bg-red-50 text-red-700' 
+                      : 'border-transparent text-gray-400 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 mb-1">
+                    <t.icon size={18} />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">{t.label}</span>
+                  </div>
+                  <p className="text-[9px] opacity-70 leading-relaxed pl-7">{t.description}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-white border-2 border-gray-100 p-8">
+            <AnimatePresence mode="wait">
+              {sourceType === 'url' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-8"
+                >
+                  <div className="flex space-x-2">
+                    <input
+                      type="url"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="Masukkan link berita atau dokumen (https://...)"
+                      className="flex-1 bg-gray-50 border border-gray-200 p-4 font-mono text-sm outline-none focus:border-red-600 transition-all"
+                    />
+                    <button
+                      onClick={handleUrlFetch}
+                      disabled={isExtracting || !url}
+                      className="bg-[#141414] text-white px-6 font-bold text-xs uppercase tracking-widest hover:bg-red-600 disabled:opacity-20 transition-all flex items-center space-x-2"
+                    >
+                      {isExtracting ? <Loader2 size={14} className="animate-spin" /> : <LinkIcon size={14} />}
+                      <span>Tarik Konten</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {sourceType === 'pdf' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-8"
+                >
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 p-12 text-center hover:border-red-600 cursor-pointer transition-all bg-gray-50"
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept=".pdf"
+                    />
+                    {isExtracting ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 size={32} className="text-red-600 animate-spin mb-4" />
+                        <p className="text-sm font-bold uppercase tracking-widest text-gray-500">Mengekstrak Teks PDF...</p>
+                      </div>
+                    ) : file ? (
+                      <div className="flex flex-col items-center">
+                        <CheckCircle2 size={32} className="text-green-600 mb-4" />
+                        <p className="text-sm font-bold uppercase tracking-widest">{file.name}</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Klik untuk ganti file</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Upload size={32} className="text-gray-300 mb-4" />
+                        <p className="text-sm font-bold uppercase tracking-widest text-gray-600">Klik atau seret PDF di sini</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Mendukung dokumen tender, RAB, dan Kontrak</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {sourceType === 'photo' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-8"
+                >
+                  <div 
+                    onClick={() => photoInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 p-12 text-center hover:border-red-600 cursor-pointer transition-all bg-gray-50"
+                  >
+                    <input
+                      type="file"
+                      ref={photoInputRef}
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                      accept="image/*"
+                      capture="environment"
+                    />
+                    {isExtracting ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 size={32} className="text-red-600 animate-spin mb-4" />
+                        <p className="text-sm font-bold uppercase tracking-widest text-gray-500">Mengekstrak Teks Foto...</p>
+                      </div>
+                    ) : photo ? (
+                      <div className="flex flex-col items-center">
+                        <div className="relative mb-4">
+                           <img 
+                             src={URL.createObjectURL(photo)} 
+                             className="h-32 w-auto object-contain border-2 border-red-600" 
+                             alt="Preview"
+                           />
+                           <div className="absolute -top-2 -right-2 bg-green-600 text-white p-1 rounded-full">
+                              <CheckCircle2 size={12} />
+                           </div>
+                        </div>
+                        <p className="text-sm font-bold uppercase tracking-widest">{photo.name}</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Klik untuk ganti foto</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Camera size={32} className="text-gray-300 mb-4" />
+                        <p className="text-sm font-bold uppercase tracking-widest text-gray-600">Ambil Foto atau Upload Gambar</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Gunakan kamera untuk memotret dokumen fisik secara langsung</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="relative">
+              <label className="text-[10px] font-black uppercase text-gray-400 mb-2 block">Isi Dokumen untuk Audit</label>
+              <textarea
+                value={input || ''}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Konten akan muncul di sini otomatis setalah ditarik dari URL/PDF, atau Anda bisa menempel teks secara manual..."
+                className="w-full h-[500px] p-6 bg-gray-50 border border-gray-200 focus:border-red-600 focus:ring-1 focus:ring-red-600 focus:bg-white outline-none transition-all font-mono text-sm leading-relaxed"
+                disabled={isAuditing || isExtracting}
+              />
+              {isExtracting && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center">
+                  <div className="flex items-center space-x-2 bg-white px-4 py-2 border shadow-sm">
+                    <Loader2 size={14} className="animate-spin text-red-600" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Memproses Dokumen...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 flex flex-col md:flex-row md:items-center justify-end gap-6 px-2">
+              <div className="flex flex-col items-end">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className={`w-3 h-3 rounded-full ${(input?.length || 0) >= 50 ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                    {input?.length || 0} Karakter Terdeteksi (Min. 50)
+                  </span>
+                </div>
+                {(input?.length || 0) > 0 && (input?.length || 0) < 50 && (
+                  <div className="text-red-500 text-[10px] font-black uppercase tracking-widest mt-1 italic">
+                    Input minimal 50 karakter
+                  </div>
+                )}
+                <div className="text-amber-600 text-[9px] font-bold uppercase tracking-widest mt-2 flex items-center bg-amber-50 px-2 py-1 border border-amber-100">
+                  <AlertCircle size={10} className="mr-1" />
+                  Pastikan API Key terisi untuk performa audit maksimal
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center text-red-700 bg-red-50 px-4 py-2 text-xs font-bold border border-red-100">
+                  <XCircle size={14} className="mr-2" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleAudit}
+                disabled={isAuditing || isExtracting || (input?.length || 0) < 50}
+                className="bg-[#141414] text-white px-12 py-5 text-sm font-black uppercase tracking-[0.2em] hover:bg-red-600 disabled:opacity-20 transition-all flex items-center justify-center space-x-4 shadow-xl shrink-0"
+              >
+                {isAuditing ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Menganalisa...</span>
+                  </>
+                ) : (
+                  <>
+                    <Hammer size={18} />
+                    <span>Luncurkan Audit</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isAuditing && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white px-4 text-center">
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className="mb-8"
+          >
+            <Cpu size={80} className="text-red-600" />
+          </motion.div>
+          <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 italic italic">Sistem Audit Konstitusi</h2>
+          <div className="max-w-md w-full space-y-4">
+             <div className="h-1 bg-gray-800 w-full overflow-hidden">
+                <motion.div 
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '100%' }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="h-full bg-red-600 w-1/2"
+                />
+             </div>
+             <p className="text-gray-400 text-[11px] font-bold uppercase tracking-[0.3em] h-4">
+               {(input?.length || 0) > 5000 ? 'Memproses Dokumen Besar...' : 'Melakukan Komparasi UUD 1945...'}
+             </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

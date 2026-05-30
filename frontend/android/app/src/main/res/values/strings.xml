@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AKP</string>
+    <string name="title_activity_main">AKP</string>
+    <string name="package_name">com.akp.app</string>
+    <string name="custom_url_scheme">com.akp.app</string>
+</resources>
