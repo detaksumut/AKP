@@ -53,7 +53,7 @@ export default function SerialNumberAuth({ onValidSerial }: SerialNumberAuthProp
         localStorage.setItem('akp_license_active', 'true');
         
         // Kirim log aktivitas ke Google Sheets
-        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbz_PLACEHOLDER_YOUR_WEBAPP_URL/exec";
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycby-ruxlJa_-qW4Xxb6bBM9I7uGQVBLqh2vJdmLJSLbtf232GjJn0ri1L9CDY1TSGFw7hQ/exec";
         if (!GOOGLE_SHEET_URL.includes("PLACEHOLDER")) {
           try {
             fetch(GOOGLE_SHEET_URL, {
