@@ -51,6 +51,25 @@ export default function SerialNumberAuth({ onValidSerial }: SerialNumberAuthProp
       if (VALID_SERIALS.includes(code) || isValidPattern(code)) {
         // Jika cocok, simpan status aktif di memori perangkat
         localStorage.setItem('akp_license_active', 'true');
+        
+        // Kirim log aktivitas ke Google Sheets
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbz_PLACEHOLDER_YOUR_WEBAPP_URL/exec";
+        if (!GOOGLE_SHEET_URL.includes("PLACEHOLDER")) {
+          try {
+            fetch(GOOGLE_SHEET_URL, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                app: "Audit Kebijakan Publik",
+                license: code,
+                action: "Aktivasi",
+                userAgent: navigator.userAgent
+              })
+            }).catch(() => {});
+          } catch (err) {}
+        }
+        
         onValidSerial();
       } else {
         // Jika tidak cocok

@@ -630,6 +630,25 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
                     const code = serialInput.trim();
                     if (VALID_SERIALS.includes(code) || isValidPattern(code)) {
                       localStorage.setItem(ACTIVE_KEY, 'true');
+                      
+                      // Kirim log aktivitas ke Google Sheets
+                      const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbz_PLACEHOLDER_YOUR_WEBAPP_URL/exec";
+                      if (!GOOGLE_SHEET_URL.includes("PLACEHOLDER")) {
+                        try {
+                          fetch(GOOGLE_SHEET_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              app: "Audit Kebijakan Publik",
+                              license: code,
+                              action: "Aktivasi",
+                              userAgent: navigator.userAgent
+                            })
+                          }).catch(() => {});
+                        } catch (err) {}
+                      }
+                      
                       setShowLicensePopup(false);
                     } else {
                       setLicenseError('NOMOR SERI TIDAK VALID ATAU KEDALUWARSA!');
