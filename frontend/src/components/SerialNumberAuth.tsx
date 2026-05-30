@@ -23,9 +23,20 @@ export default function SerialNumberAuth({ onValidSerial }: SerialNumberAuthProp
   // Aturan Pola Khusus (Opsi A)
   // Misalnya: Berawalan "AKP-", diikuti 4 angka tahun, lalu bebas huruf besar/angka 5 digit.
   // Contoh valid: AKP-2026-X7Y8Z
+  // Ditambah: Pola baru AKP-XXXXXXXX (8 huruf acak divalidasi checksum)
   const isValidPattern = (code: string) => {
     const pattern = /^AKP-\d{4}-[A-Z0-9]{5}$/;
-    return pattern.test(code);
+    if (pattern.test(code)) return true;
+
+    if (!code.startsWith("AKP-")) return false;
+    const payload = code.slice(4);
+    if (!/^[A-Z]{8}$/.test(payload)) return false;
+    const weights = [3, 7, 1, 9, 5, 8, 2, 6];
+    let sum = 0;
+    for (let i = 0; i < 8; i++) {
+      sum += payload.charCodeAt(i) * weights[i];
+    }
+    return sum % 13 === 7;
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -46,7 +46,18 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
   const ACTIVE_KEY = 'akp_license_active';
 
   const VALID_SERIALS = ['AKP-MASTER-2026', 'AKP-VIP-001', 'AKP-VIP-002', 'AKP-VIP-003'];
-  const isValidPattern = (code: string) => /^AKP-\d{4}-[A-Z0-9]{5}$/.test(code);
+  const isValidPattern = (code: string) => {
+    if (/^AKP-\d{4}-[A-Z0-9]{5}$/.test(code)) return true;
+    if (!code.startsWith("AKP-")) return false;
+    const payload = code.slice(4);
+    if (!/^[A-Z]{8}$/.test(payload)) return false;
+    const weights = [3, 7, 1, 9, 5, 8, 2, 6];
+    let sum = 0;
+    for (let i = 0; i < 8; i++) {
+      sum += payload.charCodeAt(i) * weights[i];
+    }
+    return sum % 13 === 7;
+  };
 
   const getUsageCount = () => {
     try {
