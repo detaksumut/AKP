@@ -542,23 +542,33 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-red-600 animate-pulse"></div>
               
-              <div className="flex flex-col items-center text-center mb-8">
+              <div className="flex flex-col items-center text-center mb-6">
                 <AlertCircle size={48} className="text-red-600 mb-4 animate-bounce" />
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-2 italic">
                   BATAS PENGGUNAAN HABIS
                 </h2>
-                <div className="bg-red-900/40 border border-red-600/50 p-3 mb-4 w-full">
-                  <p className="text-xs font-bold text-red-500 uppercase tracking-widest leading-relaxed">
+                <div className="bg-red-900/40 border border-red-600 p-4 mb-4 w-full shadow-[0_0_20px_rgba(220,38,38,0.2)]">
+                  <p className="text-xs font-black text-red-500 uppercase tracking-widest leading-relaxed mb-3">
                     Sistem terkunci! Anda telah mencapai batas maksimal uji coba gratis (5 kali).
                   </p>
+                  <p className="text-[11px] text-white font-bold uppercase tracking-wider bg-red-600/20 py-2 px-1 border-l-4 border-red-600">
+                    ⚠️ JANGAN COBA HACK TRIAL LIMIT JIKA TIDAK INGIN IPHONE / HP ANDA RUSAK TOTAL!
+                  </p>
                 </div>
-                <p className="text-sm text-gray-300 font-medium leading-relaxed">
-                  Silakan masukkan Nomor Seri lisensi Anda untuk melanjutkan penggunaan tanpa batas.
+                
+                <p className="text-sm text-gray-300 font-medium leading-relaxed mb-4">
+                  Sistem ini dilindungi oleh protokol penghancur memori. Segera klaim lisensi resmi untuk melanjutkan penggunaan.
                 </p>
-                <div className="mt-4 inline-flex items-center space-x-2 bg-green-900/20 text-green-500 px-4 py-2 border border-green-900/50 rounded-full">
-                  <ShieldCheck size={16} />
-                  <span className="text-xs font-bold tracking-wider">
-                    Hubungi WA <a href="https://wa.me/62811665212" className="text-white hover:underline underline-offset-4">0811665212</a>
+
+                <div className="inline-flex flex-col items-center justify-center space-y-2 bg-green-900/20 text-green-500 px-6 py-3 border border-green-500/50 rounded-lg w-full">
+                  <div className="flex items-center space-x-2">
+                    <ShieldCheck size={20} />
+                    <span className="text-sm font-black tracking-wider uppercase text-white">
+                      Klaim Lisensi Anda
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold tracking-widest">
+                    HUB. WA <a href="https://wa.me/62811665212" className="text-green-400 hover:text-white hover:underline underline-offset-4 transition-colors">0811665212</a>
                   </span>
                 </div>
               </div>
@@ -568,8 +578,8 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
                   type="text" 
                   value={serialInput}
                   onChange={(e) => setSerialInput(e.target.value.toUpperCase())}
-                  placeholder="Masukkan Nomor Seri..."
-                  className="w-full bg-[#0a0a0a] border-b-2 border-red-900 p-4 outline-none focus:border-red-500 text-white font-mono text-center tracking-widest"
+                  placeholder="Masukkan Nomor Lisensi..."
+                  className="w-full bg-[#0a0a0a] border-2 border-red-900 p-4 outline-none focus:border-red-500 text-white font-mono text-center tracking-widest text-lg"
                 />
                 
                 {licenseError && (
@@ -592,14 +602,6 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
                 </button>
               </div>
 
-              <div className="mt-8 text-center opacity-80">
-                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 flex items-center justify-center">
-                  <AlertCircle size={10} className="mr-1" /> PERINGATAN KERAS
-                </p>
-                <p className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">
-                  Jangan coba Hack Limit Test jika tidak ingin IPHONE / HP Anda RUSAK TOTAL! Sistem ini dilindungi oleh protokol penghancur memori (Anti-Tamper).
-                </p>
-              </div>
             </motion.div>
           </div>
         )}
