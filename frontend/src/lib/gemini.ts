@@ -14,7 +14,7 @@ export async function auditPolicyOrProcurement(
 
 export async function generateJournalismArticle(
   auditData: any,
-  articleType: 'straight' | 'investigative' | 'seo' | 'editorial' | 'legal' | 'rab'
+  articleType: 'straight' | 'investigative' | 'seo' | 'editorial' | 'legal' | 'rab' | 'academic'
 ) {
   try {
     return await ApiService.generateArticle(auditData, articleType);

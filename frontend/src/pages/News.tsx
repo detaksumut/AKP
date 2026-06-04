@@ -29,7 +29,10 @@ export default function News({ profile }: { profile: UserProfile | null }) {
         
         let filtered = allArticles;
         if (category !== 'ALL') {
-          filtered = allArticles.filter((a: any) => a.category === category);
+          filtered = allArticles.filter((a: any) => 
+            a.category === category || 
+            (category === 'Akademik' && (a.category === 'Academic Journal' || a.type === 'academic'))
+          );
         }
 
         setArticles(filtered);
@@ -47,7 +50,7 @@ export default function News({ profile }: { profile: UserProfile | null }) {
     (a as any).content?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const categories = ['ALL', 'Politik', 'Hukum', 'Ekonomi', 'Investigasi'];
+  const categories = ['ALL', 'Politik', 'Hukum', 'Ekonomi', 'Investigasi', 'Akademik'];
 
   return (
     <div className="bg-[#FDFDFD] min-h-screen">

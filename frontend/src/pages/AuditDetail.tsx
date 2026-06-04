@@ -406,15 +406,23 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
       const result = await generateJournalismArticle(report, type);
       const articleData = {
         audit_id: id!,
-        category: result.category,
+        category: type === 'academic' ? 'Academic Journal' : (result.category || 'Berita'),
         content: result.content,
-        excerpt: result.headline,
-        title: result.headline,
-        headline: result.headline,
-        tags: result.tags,
+        excerpt: result.headline || result.title,
+        title: result.title || result.headline,
+        headline: result.headline || result.title,
+        tags: result.tags || [],
         author_id: profile.uid,
         image_url: report.image_url || '',
-        status: 'draft'
+        status: type === 'academic' ? 'published' : 'draft',
+        type: type,
+        // Academic fields
+        detectedField: result.detectedField,
+        journalRecommendation: result.journalRecommendation,
+        matchPercentage: result.matchPercentage,
+        auditScore: result.auditScore,
+        auditFindings: result.auditFindings,
+        auditImprovements: result.auditImprovements
       };
       
       const response = await ApiService.saveArticle(articleData);
@@ -1758,17 +1766,23 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
                 { type: 'editorial', label: 'Editorial', icon: PenTool },
                 { type: 'legal', label: 'Praktisi Hukum', icon: Scale },
                 { type: 'rab', label: 'Audit RAB', icon: Receipt },
-              ].map((tool) => (
-                <button
-                  key={tool.type}
-                  disabled={isGenerating}
-                  onClick={() => handleGenerateArticle(tool.type as any)}
-                  className={`p-5 bg-red-700 hover:bg-[#141414] transition-all flex flex-col items-center justify-center space-y-3 border-2 border-transparent ${isGenerating && genType === tool.type ? 'border-white' : 'hover:border-red-500'}`}
-                >
-                  <tool.icon size={18} />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-center leading-none">{tool.label}</span>
-                </button>
-              ))}
+                { type: 'academic', label: 'Academic Journal', icon: BookOpen },
+              ].map((tool, idx, arr) => {
+                const isFullWidth = arr.length % 2 !== 0 && idx === arr.length - 1;
+                return (
+                  <button
+                    key={tool.type}
+                    disabled={isGenerating}
+                    onClick={() => handleGenerateArticle(tool.type as any)}
+                    className={`p-5 bg-red-700 hover:bg-[#141414] transition-all flex flex-col items-center justify-center space-y-3 border-2 border-transparent ${
+                      isGenerating && genType === tool.type ? 'border-white' : 'hover:border-red-500'
+                    } ${isFullWidth ? 'col-span-2' : ''}`}
+                  >
+                    <tool.icon size={18} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-center leading-none">{tool.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -1781,6 +1795,7 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
                     key={article.id}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
+                    onClick={() => navigate(`/news/${article.id}`)}
                     className="p-6 bg-white border border-gray-100 hover:border-red-600 transition-all cursor-pointer group shadow-sm"
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -1799,7 +1814,7 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
                         <img src={article.image_url || article.thumbnailUrl} alt="Thumbnail" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         {article.status === 'draft' && (
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                            <label className="cursor-pointer bg-white text-black p-2 rounded-full hover:bg-red-600 hover:text-white transition-colors">
+                            <label onClick={e => e.stopPropagation()} className="cursor-pointer bg-white text-black p-2 rounded-full hover:bg-red-600 hover:text-white transition-colors">
                               <Camera size={16} />
                               <input 
                                 type="file" 
@@ -1817,7 +1832,7 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
                     ) : (
                       article.status === 'draft' && (
                         <div className="mt-3 h-32 bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center space-y-2 group/empty hover:border-red-600 transition-colors">
-                          <label className="cursor-pointer flex flex-col items-center">
+                          <label onClick={e => e.stopPropagation()} className="cursor-pointer flex flex-col items-center">
                             <Camera size={24} className="text-gray-300 group-hover/empty:text-red-600 transition-colors" />
                             <span className="text-[8px] font-black uppercase tracking-widest text-gray-400 group-hover/empty:text-red-600">Tambah Foto Headline</span>
                             <input 
@@ -1853,7 +1868,7 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         {(!article.status || article.status === 'draft') ? (
                           <>
-                            <label className="flex-1 cursor-pointer flex items-center justify-center space-x-2 bg-gray-900 border border-gray-800 px-3 py-3 text-white hover:bg-black transition-all shadow-md group/btn" title="Upload Gambar Headline">
+                            <label onClick={e => e.stopPropagation()} className="flex-1 cursor-pointer flex items-center justify-center space-x-2 bg-gray-900 border border-gray-800 px-3 py-3 text-white hover:bg-black transition-all shadow-md group/btn" title="Upload Gambar Headline">
                               <Camera size={14} className="group-hover/btn:text-red-500 transition-colors" />
                               <span className="text-[10px] font-black uppercase tracking-widest">Upload Foto</span>
                               <input 

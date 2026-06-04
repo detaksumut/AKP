@@ -55,7 +55,7 @@ export interface AuditReport {
 export interface JournalismArticle {
   id?: string;
   auditId: string;
-  type: 'straight' | 'investigative' | 'seo' | 'editorial' | 'legal' | 'rab';
+  type: 'straight' | 'investigative' | 'seo' | 'editorial' | 'legal' | 'rab' | 'academic';
   title: string;
   headline: string;
   content: string;
@@ -67,4 +67,12 @@ export interface JournalismArticle {
   status: 'draft' | 'published';
   createdAt: any;
   created_at?: string;
+  // Academic Journal metadata
+  detectedField?: string;
+  journalRecommendation?: string;
+  matchPercentage?: number;
+  auditScore?: number;
+  auditFindings?: string;
+  auditImprovements?: string;
 }
+

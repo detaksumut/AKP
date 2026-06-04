@@ -19,7 +19,10 @@ import {
   CheckCircle2,
   Camera,
   Upload,
-  X
+  X,
+  BookOpen,
+  Download,
+  FileText
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -36,6 +39,213 @@ export default function ArticleDetail({ profile }: { profile: UserProfile | null
   const [editContent, setEditContent] = useState('');
   const [editHeadline, setEditHeadline] = useState('');
   const [saving, setSaving] = useState(false);
+  const [printMode, setPrintMode] = useState<'all' | 'audit' | 'article'>('all');
+  const [activeTab, setActiveTab] = useState<'audit' | 'article'>('audit');
+
+  useEffect(() => {
+    if (printMode !== 'all') {
+      window.print();
+      const timer = setTimeout(() => {
+        setPrintMode('all');
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [printMode]);
+
+  const handlePrintAudit = () => {
+    setPrintMode('audit');
+  };
+
+  const handlePrintArticle = () => {
+    setPrintMode('article');
+  };
+
+  const getScoreInfo = (score: number) => {
+    if (score >= 90) return { label: 'Sangat Baik', color: 'text-green-600 bg-green-50 border-green-200' };
+    if (score >= 80) return { label: 'Baik', color: 'text-blue-600 bg-blue-50 border-blue-200' };
+    if (score >= 70) return { label: 'Cukup', color: 'text-amber-600 bg-amber-50 border-amber-200' };
+    if (score >= 60) return { label: 'Perlu Revisi Mayor', color: 'text-orange-600 bg-orange-50 border-orange-200' };
+    return { label: 'Belum Layak Submit', color: 'text-red-600 bg-red-50 border-red-200' };
+  };
+
+  const handleDownloadAuditDOC = () => {
+    if (!article) return;
+    const score = article.auditScore || 0;
+    const scoreInfo = getScoreInfo(score);
+    
+    let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>\n`;
+    html += `<head>\n`;
+    html += `<meta charset="utf-8">\n`;
+    html += `<title>Laporan Audit Akademik - ${article.title}</title>\n`;
+    html += `<style>\n`;
+    html += `  body { font-family: 'Calibri', sans-serif; line-height: 1.5; color: #1a1a1a; }\n`;
+    html += `  h1 { font-family: 'Arial Black', sans-serif; color: #990000; border-bottom: 2px solid #990000; padding-bottom: 5px; }\n`;
+    html += `  h2 { font-family: 'Arial', sans-serif; border-bottom: 1px solid #cccccc; padding-bottom: 3px; margin-top: 20px; }\n`;
+    html += `  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }\n`;
+    html += `  td, th { border: 1px solid #dddddd; padding: 8px; text-align: left; }\n`;
+    html += `  .label { font-weight: bold; background-color: #f5f5f5; width: 30%; }\n`;
+    html += `</style>\n`;
+    html += `</head>\n`;
+    html += `<body>\n`;
+    html += `<h1>LAPORAN AUDIT AKADEMIK AI</h1>\n`;
+    html += `<p>Dihasilkan secara otomatis oleh AKP Journalism AKP Platform</p>\n`;
+    
+    html += `<table>\n`;
+    html += `  <tr><td class="label">Judul Naskah</td><td>${article.headline || article.title}</td></tr>\n`;
+    html += `  <tr><td class="label">Bidang Ilmu Terdeteksi</td><td>${article.detectedField || 'N/A'}</td></tr>\n`;
+    html += `  <tr><td class="label">Rekomendasi Jurnal</td><td>${article.journalRecommendation || 'N/A'}</td></tr>\n`;
+    html += `  <tr><td class="label">Tingkat Kecocokan</td><td>${article.matchPercentage ? `${article.matchPercentage}%` : 'N/A'}</td></tr>\n`;
+    html += `  <tr><td class="label">Skor Audit Akademik</td><td><b>${score} / 100</b> (${scoreInfo.label})</td></tr>\n`;
+    html += `</table>\n`;
+
+    html += `<h2>Temuan Audit Akademik</h2>\n`;
+    html += `<div style="white-space: pre-wrap;">${ensureString(article.auditFindings).replace(/\n/g, '<br/>')}</div>\n`;
+
+    html += `<h2>Daftar Perbaikan yang Diperlukan</h2>\n`;
+    html += `<div style="white-space: pre-wrap;">${ensureString(article.auditImprovements).replace(/\n/g, '<br/>')}</div>\n`;
+
+    html += `</body>\n`;
+    html += `</html>`;
+
+    const blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `LAPORAN_AUDIT_AKADEMIK_${article.title.replace(/[^a-z0-9]+/gi, '_')}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadArticleDOC = () => {
+    if (!article) return;
+    
+    let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>\n`;
+    html += `<head>\n`;
+    html += `<meta charset="utf-8">\n`;
+    html += `<title>${article.title}</title>\n`;
+    html += `<style>\n`;
+    html += `  body { font-family: 'Georgia', serif; line-height: 1.6; color: #111111; text-align: justify; margin: 1in; }\n`;
+    html += `  h1 { font-family: 'Arial', sans-serif; text-align: center; font-size: 22pt; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }\n`;
+    html += `  h2 { font-family: 'Arial', sans-serif; font-size: 14pt; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #777777; padding-bottom: 3px; }\n`;
+    html += `  h3 { font-family: 'Arial', sans-serif; font-size: 12pt; font-weight: bold; margin-top: 20px; margin-bottom: 5px; }\n`;
+    html += `  p { margin-bottom: 15px; text-indent: 0.5in; }\n`;
+    html += `  .no-indent { text-indent: 0; }\n`;
+    html += `</style>\n`;
+    html += `</head>\n`;
+    html += `<body>\n`;
+    html += `<h1>${article.headline || article.title}</h1>\n`;
+    
+    let contentHtml = ensureString(article.content);
+    contentHtml = contentHtml.replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                             .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                             .replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                             
+    contentHtml = contentHtml.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    contentHtml = contentHtml.replace(/\*(.*?)\*/g, '<i>$1</i>');
+    
+    const paragraphs = contentHtml.split(/\n\n+/);
+    const parsedHtml = paragraphs.map(p => {
+      p = p.trim();
+      if (!p) return '';
+      if (p.startsWith('<h') || p.startsWith('</h')) return p;
+      if (p.startsWith('- ')) {
+        const items = p.split('\n');
+        return '<ul>' + items.map(li => `<li>${li.replace(/^- /, '')}</li>`).join('') + '</ul>';
+      }
+      return `<p>${p}</p>`;
+    }).join('\n');
+
+    html += parsedHtml;
+    html += `</body>\n`;
+    html += `</html>`;
+
+    const blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ARTIKEL_VERSI_PERBAIKAN_${article.title.replace(/[^a-z0-9]+/gi, '_')}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const renderAuditReportPrintable = () => {
+    if (!article) return null;
+    const score = article.auditScore || 0;
+    const scoreInfo = getScoreInfo(score);
+    return (
+      <div className="space-y-8">
+        <div className="text-center border-b pb-6">
+          <h1 className="text-2xl font-black uppercase tracking-tight text-red-600">LAPORAN AUDIT AKADEMIK AI</h1>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Sistem Penilaian & Evaluasi Jurnal Ilmiah AKP</p>
+        </div>
+        
+        <table className="w-full text-sm border-collapse">
+          <tbody>
+            <tr className="border-b">
+              <td className="py-2 font-bold w-1/3 text-gray-500 uppercase tracking-wider text-[10px]">Judul Naskah</td>
+              <td className="py-2 text-gray-900 font-bold">{article.headline || article.title}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="py-2 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Bidang Ilmu Terdeteksi</td>
+              <td className="py-2 text-gray-900 font-bold">{article.detectedField || 'N/A'}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="py-2 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Rekomendasi Jurnal</td>
+              <td className="py-2 text-red-600 font-bold">{article.journalRecommendation || 'N/A'}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="py-2 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Tingkat Kecocokan</td>
+              <td className="py-2 text-gray-900 font-bold">{article.matchPercentage ? `${article.matchPercentage}%` : 'N/A'}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="py-2 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Skor Audit Akademik</td>
+              <td className="py-2 text-gray-900 font-bold">
+                <span className="font-extrabold text-lg text-red-600">{score}</span> / 100 ({scoreInfo.label})
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="space-y-4">
+          <h2 className="text-xs font-black uppercase tracking-widest text-red-600 border-b pb-2">Temuan Audit Akademik</h2>
+          <div className="prose prose-sm leading-relaxed max-w-none font-sans text-gray-800">
+            <ReactMarkdown>{article.auditFindings || 'Tidak ada temuan audit.'}</ReactMarkdown>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-xs font-black uppercase tracking-widest text-red-600 border-b pb-2">Daftar Perbaikan yang Diperlukan</h2>
+          <div className="prose prose-sm leading-relaxed max-w-none font-sans text-gray-800">
+            <ReactMarkdown>{article.auditImprovements || 'Tidak ada daftar perbaikan.'}</ReactMarkdown>
+          </div>
+        </div>
+
+        <div className="pt-12 text-center border-t text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+          Dihasilkan otomatis oleh AKP Academic Editor AI
+        </div>
+      </div>
+    );
+  };
+
+  const renderArticlePrintable = () => {
+    if (!article) return null;
+    return (
+      <div className="space-y-8 font-serif leading-relaxed max-w-none text-justify">
+        <h1 className="text-3xl font-bold text-center leading-tight uppercase mb-8">{article.headline || article.title}</h1>
+        
+        <div className="prose max-w-none font-serif text-gray-900 leading-relaxed">
+          <ReactMarkdown>{ensureString(article.content)}</ReactMarkdown>
+        </div>
+        
+        <div className="pt-12 text-center border-t text-[10px] text-gray-400 font-sans font-bold uppercase tracking-widest">
+          Dihasilkan oleh AKP Academic Editor AI - Naskah Siap Submit
+        </div>
+      </div>
+    );
+  };
+
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
     title: string;
@@ -275,6 +485,22 @@ export default function ArticleDetail({ profile }: { profile: UserProfile | null
     </div>
   );
 
+  if (printMode === 'audit') {
+    return (
+      <div className="p-12 max-w-4xl mx-auto bg-white font-sans text-gray-900">
+        {renderAuditReportPrintable()}
+      </div>
+    );
+  }
+
+  if (printMode === 'article') {
+    return (
+      <div className="p-12 max-w-4xl mx-auto bg-white font-serif text-gray-900 leading-relaxed">
+        {renderArticlePrintable()}
+      </div>
+    );
+  }
+
   const formatDate = (date: any) => {
     if (!date) return 'Draft';
     try {
@@ -403,7 +629,9 @@ export default function ArticleDetail({ profile }: { profile: UserProfile | null
       </header>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 -mt-12 relative z-20 pb-32">
+      <main className={`mx-auto px-4 -mt-12 relative z-20 pb-32 transition-all duration-300 ${
+        article.type === 'academic' ? 'max-w-6xl' : 'max-w-3xl'
+      }`}>
         <article className="bg-white p-8 md:p-16 border border-gray-100 shadow-2xl">
           {(article.thumbnailUrl || article.image_url) ? (
             <div className="mb-12 -mx-8 md:-mx-16 -mt-8 md:-mt-16 overflow-hidden relative group">
@@ -444,30 +672,209 @@ export default function ArticleDetail({ profile }: { profile: UserProfile | null
               </label>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-12 py-4 border-y border-gray-100 select-none">
-             <div className="flex flex-wrap gap-2 max-w-full">
-               {article.tags?.map(tag => (
-                 <span key={tag} className="text-[9px] font-black uppercase tracking-widest text-gray-400">#{tag}</span>
-               ))}
-             </div>
-             <div className="text-[10px] font-black uppercase tracking-widest text-red-600 flex items-center">
-               <ShieldCheck size={14} className="mr-2 text-red-600 animate-pulse" /> HASIL INVESTIGASI RESMI AKP
-             </div>
-          </div>
+          {article.type === 'academic' ? (
+            <div className="space-y-8">
+              {/* Tab Selector */}
+              <div className="flex border-b border-gray-200 mb-8 no-print select-none">
+                <button
+                  onClick={() => setActiveTab('audit')}
+                  className={`flex-1 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
+                    activeTab === 'audit'
+                      ? 'border-red-600 text-red-600'
+                      : 'border-transparent text-gray-400 hover:text-black'
+                  }`}
+                >
+                  1. Hasil Audit & Bidang Ilmu
+                </button>
+                <button
+                  onClick={() => setActiveTab('article')}
+                  className={`flex-1 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
+                    activeTab === 'article'
+                      ? 'border-red-600 text-red-600'
+                      : 'border-transparent text-gray-400 hover:text-black'
+                  }`}
+                >
+                  2. Artikel Versi Perbaikan
+                </button>
+              </div>
 
-          <div className="prose max-w-none">
-             {isEditing ? (
-               <textarea 
-                 value={editContent || ''}
-                 onChange={(e) => setEditContent(e.target.value)}
-                 className="w-full min-h-[500px] p-6 bg-gray-50 border-2 border-dashed border-red-200 outline-none font-serif text-lg"
-               />
-             ) : (
-               <ReactMarkdown>{ensureString(article.content)}</ReactMarkdown>
-             )}
-          </div>
+              {activeTab === 'audit' ? (
+                <div className="space-y-8 select-none">
+                  {/* Identifikasi Otomatis Bidang Ilmu */}
+                  <div className="bg-red-50/20 border-2 border-red-900/10 p-6 md:p-8 rounded-sm shadow-sm">
+                    <div className="flex items-center space-x-3 text-red-600 mb-6">
+                      <Globe size={18} />
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.25em]">Identifikasi Otomatis Bidang Ilmu</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                      <div>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Bidang Ilmu Terdeteksi</span>
+                        <span className="text-base font-black uppercase tracking-tight text-gray-900 leading-tight block">{article.detectedField || 'Hukum dan Keadilan'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Rekomendasi Kategori Jurnal</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-red-700 bg-red-50 border border-red-200/50 px-3 py-1.5 inline-block">{article.journalRecommendation || 'Jurnal Hukum dan Keadilan'}</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="relative w-12 h-12 rounded-full border-4 border-red-500/20 flex items-center justify-center font-mono font-black text-[11px] text-red-600 bg-white">
+                          {article.matchPercentage || 94}%
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block leading-none mb-1">Kecocokan</span>
+                          <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest leading-none">Tingkat Kompatibilitas</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-          <ConstitutionalWarning className="my-12" />
+                  {/* Audit Akademik Score & Findings */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                    {/* Score Panel */}
+                    <div className="md:col-span-4 bg-gray-50 border border-gray-150 p-6 text-center flex flex-col justify-center items-center rounded-sm">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-4">Skor Audit Akademik</span>
+                      <div className="relative inline-flex items-center justify-center mb-4">
+                        <svg className="w-24 h-24 transform -rotate-90">
+                          <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-200" />
+                          <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="8" fill="transparent" 
+                            strokeDasharray={264} 
+                            strokeDashoffset={264 - (264 * (article.auditScore || 0)) / 100}
+                            className={`transition-all duration-1000 ${
+                              (article.auditScore || 0) >= 90 ? 'text-green-500' : 
+                              (article.auditScore || 0) >= 80 ? 'text-blue-500' : 
+                              (article.auditScore || 0) >= 70 ? 'text-amber-500' : 'text-red-500'
+                            }`}
+                          />
+                        </svg>
+                        <span className="absolute text-2xl font-black italic">{article.auditScore || 0}</span>
+                      </div>
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 border rounded-full ${
+                        getScoreInfo(article.auditScore || 0).color
+                      }`}>
+                        {getScoreInfo(article.auditScore || 0).label}
+                      </span>
+                    </div>
+
+                    {/* Findings & Improvements Checklist */}
+                    <div className="md:col-span-8 space-y-6">
+                      <div className="bg-white border border-gray-100 p-6 shadow-sm">
+                        <div className="flex items-center space-x-2 text-red-600 mb-3 border-b pb-2">
+                          <ShieldCheck size={14} />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest">Temuan Audit Akademik</h4>
+                        </div>
+                        <div className="prose prose-sm font-sans max-w-none text-gray-700 leading-relaxed max-h-48 overflow-y-auto pr-2">
+                          <ReactMarkdown>{article.auditFindings || 'Tidak ada temuan audit.'}</ReactMarkdown>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-gray-100 p-6 shadow-sm">
+                        <div className="flex items-center space-x-2 text-green-600 mb-3 border-b pb-2">
+                          <CheckCircle2 size={14} />
+                          <h4 className="text-[10px] font-black uppercase tracking-widest">Rencana Tindak Perbaikan</h4>
+                        </div>
+                        <div className="prose prose-sm font-sans max-w-none text-gray-700 leading-relaxed max-h-48 overflow-y-auto pr-2">
+                          <ReactMarkdown>{article.auditImprovements || 'Tidak ada daftar perbaikan.'}</ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tab 1 Exports */}
+                  <div className="border-t border-gray-100 pt-8 flex flex-col sm:flex-row gap-4 justify-between items-center no-print">
+                    <div className="text-left">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-800">Export Laporan Audit</h4>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mt-1">Unduh dokumen hasil audit komparatif.</p>
+                    </div>
+                    <div className="flex space-x-3 w-full sm:w-auto select-none">
+                      <button
+                        onClick={handleDownloadAuditDOC}
+                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-zinc-950 border border-zinc-800 text-white hover:bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                      >
+                        <FileText size={12} />
+                        <span>Export DOCX</span>
+                      </button>
+                      <button
+                        onClick={handlePrintAudit}
+                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-red-600 text-white hover:bg-red-700 px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                      >
+                        <Printer size={12} />
+                        <span>Export PDF</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Artikel Versi Perbaikan (Academic Editor AI) */}
+                  <div className="bg-gray-50/50 border border-gray-150 p-6 md:p-12 shadow-inner">
+                    <div className="max-w-none font-serif text-justify text-gray-900 leading-relaxed select-text">
+                      {isEditing ? (
+                        <textarea
+                          value={editContent || ''}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full min-h-[500px] p-6 bg-white border border-gray-200 outline-none font-serif text-base leading-relaxed"
+                        />
+                      ) : (
+                        <div className="prose prose-red max-w-none">
+                          <ReactMarkdown>{ensureString(article.content)}</ReactMarkdown>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tab 2 Exports */}
+                  <div className="border-t border-gray-100 pt-8 flex flex-col sm:flex-row gap-4 justify-between items-center no-print">
+                    <div className="text-left">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-800">Export Naskah Jurnal</h4>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mt-1">Unduh hasil rewrite Academic Editor AI siap submit.</p>
+                    </div>
+                    <div className="flex space-x-3 w-full sm:w-auto select-none">
+                      <button
+                        onClick={handleDownloadArticleDOC}
+                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-zinc-950 border border-zinc-800 text-white hover:bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                      >
+                        <FileText size={12} />
+                        <span>Export DOCX</span>
+                      </button>
+                      <button
+                        onClick={handlePrintArticle}
+                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-red-600 text-white hover:bg-red-700 px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                      >
+                        <Printer size={12} />
+                        <span>Export PDF</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-12 py-4 border-y border-gray-100 select-none">
+                 <div className="flex flex-wrap gap-2 max-w-full">
+                   {article.tags?.map(tag => (
+                     <span key={tag} className="text-[9px] font-black uppercase tracking-widest text-gray-400">#{tag}</span>
+                   ))}
+                 </div>
+                 <div className="text-[10px] font-black uppercase tracking-widest text-red-600 flex items-center">
+                   <ShieldCheck size={14} className="mr-2 text-red-600 animate-pulse" /> HASIL INVESTIGASI RESMI AKP
+                 </div>
+              </div>
+
+              <div className="prose max-w-none">
+                 {isEditing ? (
+                   <textarea 
+                     value={editContent || ''}
+                     onChange={(e) => setEditContent(e.target.value)}
+                     className="w-full min-h-[500px] p-6 bg-gray-50 border-2 border-dashed border-red-200 outline-none font-serif text-lg"
+                   />
+                 ) : (
+                   <ReactMarkdown>{ensureString(article.content)}</ReactMarkdown>
+                 )}
+              </div>
+
+              <ConstitutionalWarning className="my-12" />
+            </>
+          )}
 
           {/* Footer Card */}
           <div className="mt-20 p-10 bg-gray-50 border border-gray-100 relative overflow-hidden group">
