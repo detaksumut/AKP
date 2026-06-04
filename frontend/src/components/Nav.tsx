@@ -9,6 +9,7 @@ import {
   LogOut, 
   LogIn,
   Languages,
+  BookOpen,
   Menu,
   X,
   Settings as SettingsIcon,
@@ -54,6 +55,7 @@ export default function Nav({
   const menuItems = [
     { to: '/news', label: "Lensa News", icon: Newspaper },
     { to: '/audits', label: "Arsip Audit", icon: Search },
+    { to: '/journal', label: "Jurnal Akademi", icon: BookOpen },
     { to: '/dashboard', label: "Dashboard", icon: LayoutDashboard, protected: true },
     { to: '/new-audit', label: "Audit Baru", icon: PlusCircle, protected: true },
   ];

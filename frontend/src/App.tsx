@@ -29,6 +29,7 @@ import AuditDetail from './pages/AuditDetail';
 import NewAudit from './pages/NewAudit';
 import News from './pages/News';
 import ArticleDetail from './pages/ArticleDetail';
+import JournalMaker from './pages/JournalMaker';
 import Settings from './pages/Settings';
 
 export default function App() {
@@ -80,6 +81,7 @@ export default function App() {
                 <Route path="/news/:id" element={<ArticleDetail profile={profile} />} />
                 <Route path="/audits" element={<AuditList profile={profile} />} />
                 <Route path="/audit/:id" element={<AuditDetail profile={profile} />} />
+                <Route path="/journal" element={<JournalMaker profile={profile!} />} />
                 
                 <Route 
                   path="/dashboard" 

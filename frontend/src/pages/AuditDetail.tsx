@@ -1766,7 +1766,6 @@ export default function AuditDetail({ profile }: { profile?: UserProfile | null 
                 { type: 'editorial', label: 'Editorial', icon: PenTool },
                 { type: 'legal', label: 'Praktisi Hukum', icon: Scale },
                 { type: 'rab', label: 'Audit RAB', icon: Receipt },
-                { type: 'academic', label: 'Academic Journal', icon: BookOpen },
               ].map((tool, idx, arr) => {
                 const isFullWidth = arr.length % 2 !== 0 && idx === arr.length - 1;
                 return (
