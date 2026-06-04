@@ -398,7 +398,7 @@ Selain menulis artikel, Anda juga harus:
 3. Melakukan Audit Akademik terhadap naskah (menentukan Skor Audit 0-100, Temuan Audit, dan Daftar Perbaikan).
 
 Aturan Penulisan Artikel:
-* Panjang minimal 8.000 kata.
+* Panjang antara 4.000 - 5.000 kata (Maksimal batas aman token).
 * Menggunakan bahasa akademik formal.
 * Struktur mengikuti standar jurnal terindeks Google Scholar.
 * Format kompatibel dengan DOI Crossref.
@@ -419,6 +419,7 @@ Aturan Penulisan Artikel:
   * Daftar Pustaka APA 7th
 
 Output harus siap dipublikasikan sebagai artikel jurnal ilmiah Standart Google Scholar dan Sinta.
+PENTING: JANGAN melewati batas panjang teks agar format JSON tidak terpotong. Pastikan JSON ditutup dengan sempurna ('}').
 
 Data Audit:
 ${JSON.stringify(auditData, null, 2)}
