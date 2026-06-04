@@ -400,25 +400,25 @@ Tugas Anda adalah:
    - 70-79 = Cukup
    - 60-69 = Perlu Revisi Mayor
    - <60 = Belum Layak Submit
-5. Bertindak sebagai Academic Editor AI untuk menyusun ulang artikel ke dalam format jurnal ilmiah yang relevan dengan bidang ilmu dokumen (FORMAT JURNAL APAPUN BEBAS).
+5. Bertindak sebagai Academic Editor AI untuk menyusun ulang artikel ke dalam format jurnal ilmiah standar yang relevan dengan bidang ilmu dokumen (FORMAT JURNAL STANDAR).
    ATURAN KETAT ACADEMIC EDITOR AI:
-   - BOLEH: Memperbaiki struktur artikel, menata ulang paragraf, memperbaiki tata bahasa, memperbaiki kalimat tidak efektif, menyesuaikan heading, menyusun abstrak yang lebih baik, menyusun kata kunci yang lebih relevan, menyesuaikan format sitasi, menyesuaikan format referensi, menyesuaikan template jurnal.
+   - BOLEH: Memperbaiki struktur artikel, menata ulang paragraf, memperbaiki tata bahasa, memperbaiki kalimat tidak efektif, menyesuaikan heading, menyusun abstrak yang lebih baik, menyusun kata kunci yang lebih relevan, menyesuaikan format sitasi, menyesuaikan format referensi, menyesuaikan template jurnal standar.
    - TIDAK BOLEH: Mengubah Judul asli penelitian (gunakan judul dari data audit), membuat data penelitian baru, mengubah hasil penelitian, mengubah makna penelitian, menambahkan referensi fiktif, membuat kutipan palsu, menambahkan fakta yang tidak terdapat dalam dokumen asli, membuat kesimpulan yang tidak didukung data penelitian.
-6. Artikel versi perbaikan harus disusun secara SANGAT LENGKAP, MENDALAM, DETAIL, DAN EKSHAUSTIF (wajib minimal 10.000 kata atau sepanjang mungkin sesuai batas maksimum token model, jangan disingkat atau diringkas). Setiap bagian harus diekspansi secara maksimal dengan penjelasan komprehensif:
+6. Artikel versi perbaikan harus disusun secara MENDALAM dan TERSTRUKTUR (maksimal 8.000 kata). Setiap bagian harus dijelaskan secara komprehensif mengikuti standar penulisan jurnal akademik:
    - Judul (Judul asli dari data audit, tidak boleh diubah)
    - Nama Penulis
    - Afiliasi
    - Email Korespondensi
-   - Abstrak (Bahasa Indonesia dan Bahasa Inggris, masing-masing minimal 250 kata, mencakup latar belakang, tujuan, metode, temuan, dan kesimpulan)
-   - Kata Kunci (minimal 5 kata kunci spesifik)
-   - Pendahuluan (Sangat detail, jelaskan latar belakang secara meluas dan mendalam sesuai bidang keilmuan)
-   - Tinjauan Pustaka (Minimal 6-8 paragraf komprehensif membahas teori-teori terkait sesuai bidang ilmunya secara mendalam lengkap dengan sitasi pendukung)
+   - Abstrak (Bahasa Indonesia dan Bahasa Inggris, masing-masing 200-250 kata, mencakup latar belakang, tujuan, metode, temuan, dan kesimpulan)
+   - Kata Kunci (3-5 kata kunci spesifik)
+   - Pendahuluan (Jelaskan latar belakang secara meluas dan mendalam sesuai bidang keilmuan)
+   - Tinjauan Pustaka (Membahas teori-teori terkait sesuai bidang ilmunya lengkap dengan sitasi pendukung)
    - Metode Penelitian (Mengelaborasi secara detail metodologi yang relevan dengan disiplin ilmunya)
-   - Hasil Penelitian (Sajikan rincian temuan data secara lengkap dan sistematis disertai penjelasan tekstual yang rinci)
-   - Pembahasan (Ini adalah bagian utama analisis. Harus berupa analisis keilmuan yang sangat tajam, meluas, dan mendalam, diuraikan menjadi banyak paragraf panjang)
+   - Hasil Penelitian (Sajikan rincian temuan data secara lengkap dan sistematis disertai penjelasan tekstual)
+   - Pembahasan (Ini adalah bagian utama analisis. Harus berupa analisis keilmuan yang tajam dan mendalam)
    - Kesimpulan dan Rekomendasi (Kesimpulan mendalam dan menjabarkan rekomendasi akademis/praktis)
-   - Daftar Pustaka (Mencantumkan daftar rujukan ilmiah akademis yang relevan dan lengkap, minimal 15 referensi dalam format standar)
-   SANGAT PENTING: Tulis ulasan ilmiah yang sangat panjang, elaboratif, kaya analisis, detail, dan akademis. Jangan menulis ringkasan yang pendek atau dangkal. Maksimalkan panjang teks hingga sedekat mungkin ke batas token keluaran model (target 10.000 kata).
+   - Daftar Pustaka (Mencantumkan daftar rujukan ilmiah akademis yang relevan dan lengkap dalam format standar)
+   SANGAT PENTING: Tulis ulasan ilmiah yang kaya analisis, detail, dan akademis. Batasi panjang teks hingga maksimal 8.000 kata.
 
 Data Audit:
 ${JSON.stringify(auditData, null, 2)}
