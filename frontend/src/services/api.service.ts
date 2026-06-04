@@ -401,7 +401,7 @@ Instruksi Utama:
 3. JANGAN mengubah makna, JANGAN menambah data fiktif. Hanya "copy-paste" dengan penyesuaian kalimat agar menjadi bahasa akademik formal.
 
 Aturan Penulisan:
-* Tulis SEPANJANG dan SEDETAIL mungkin (target 8.000 kata). Silakan habiskan seluruh batas token Anda untuk menulis isi jurnal ini.
+* Tulis SEPANJANG dan SEDETAIL mungkin (target 5.000 kata). Silakan habiskan seluruh batas token Anda untuk menulis isi jurnal ini.
 * LANGSUNG tuliskan isi artikel dalam format Markdown murni.
 * JANGAN gunakan format JSON. JANGAN sertakan markdown json block.
 * WAJIB diawali dengan Judul Utama menggunakan heading 1 (# Judul Artikel).
