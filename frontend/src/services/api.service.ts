@@ -388,37 +388,37 @@ Tolong keluarkan hasil dalam format JSON murni dengan struktur berikut persis:
     
     let prompt = '';
     if (articleType === 'academic') {
-      prompt = `Anda adalah Academic Editor AI untuk Journalism AKP.
-Tugas Anda adalah:
-1. Menganalisis judul, abstrak, kata kunci, dan isi dokumen dari data audit di bawah ini.
-2. Mengidentifikasi bidang ilmu yang paling sesuai secara otomatis berdasarkan isi dokumen (misalnya: Hukum, Kedokteran, Ekonomi, Sains, Teknik, Agama, Sastra, dll - BEBAS SESUAI KONTEKS).
-3. Menentukan Persentase Kecocokan (Tingkat Kecocokan, antara 0-100) and Kategori Jurnal yang Direkomendasikan (misalnya "Jurnal Hukum dan Keadilan" atau "Jurnal Ilmu Kedokteran").
-4. Melakukan Audit Akademik terhadap naskah berdasarkan: Struktur Artikel, Judul, Abstrak, Kata Kunci, Sitasi, Referensi, Tata Bahasa, Metodologi, Pembahasan, Kesimpulan, dan Kepatuhan Format Jurnal. Tentukan Skor Audit (0-100) dan berikan Temuan Audit serta Daftar Perbaikan.
-   Kategori Skor Audit:
-   - 90-100 = Sangat Baik
-   - 80-89 = Baik
-   - 70-79 = Cukup
-   - 60-69 = Perlu Revisi Mayor
-   - <60 = Belum Layak Submit
-5. Bertindak sebagai Academic Editor AI untuk menyusun ulang artikel ke dalam format jurnal ilmiah standar yang relevan dengan bidang ilmu dokumen (FORMAT JURNAL STANDAR).
-   ATURAN KETAT ACADEMIC EDITOR AI:
-   - BOLEH: Memperbaiki struktur artikel, menata ulang paragraf, memperbaiki tata bahasa, memperbaiki kalimat tidak efektif, menyesuaikan heading, menyusun abstrak yang lebih baik, menyusun kata kunci yang lebih relevan, menyesuaikan format sitasi, menyesuaikan format referensi, menyesuaikan template jurnal standar.
-   - TIDAK BOLEH: Mengubah Judul asli penelitian (gunakan judul dari data audit), membuat data penelitian baru, mengubah hasil penelitian, mengubah makna penelitian, menambahkan referensi fiktif, membuat kutipan palsu, menambahkan fakta yang tidak terdapat dalam dokumen asli, membuat kesimpulan yang tidak didukung data penelitian.
-6. Artikel versi perbaikan harus disusun secara MENDALAM dan TERSTRUKTUR (maksimal 8.000 kata). Setiap bagian harus dijelaskan secara komprehensif mengikuti standar penulisan jurnal akademik:
-   - Judul (Judul asli dari data audit, tidak boleh diubah)
-   - Nama Penulis
-   - Afiliasi
-   - Email Korespondensi
-   - Abstrak (Bahasa Indonesia dan Bahasa Inggris, masing-masing 200-250 kata, mencakup latar belakang, tujuan, metode, temuan, dan kesimpulan)
-   - Kata Kunci (3-5 kata kunci spesifik)
-   - Pendahuluan (Jelaskan latar belakang secara meluas dan mendalam sesuai bidang keilmuan)
-   - Tinjauan Pustaka (Membahas teori-teori terkait sesuai bidang ilmunya lengkap dengan sitasi pendukung)
-   - Metode Penelitian (Mengelaborasi secara detail metodologi yang relevan dengan disiplin ilmunya)
-   - Hasil Penelitian (Sajikan rincian temuan data secara lengkap dan sistematis disertai penjelasan tekstual)
-   - Pembahasan (Ini adalah bagian utama analisis. Harus berupa analisis keilmuan yang tajam dan mendalam)
-   - Kesimpulan dan Rekomendasi (Kesimpulan mendalam dan menjabarkan rekomendasi akademis/praktis)
-   - Daftar Pustaka (Mencantumkan daftar rujukan ilmiah akademis yang relevan dan lengkap dalam format standar)
-   SANGAT PENTING: Tulis ulasan ilmiah yang kaya analisis, detail, dan akademis. Batasi panjang teks hingga maksimal 8.000 kata.
+      prompt = `Anda adalah Academic Journal Writer AI.
+
+Tugas Anda menghasilkan artikel ilmiah lengkap yang siap diterbitkan pada jurnal akademik nasional maupun internasional berdasarkan data audit di bawah ini.
+
+Selain menulis artikel, Anda juga harus:
+1. Menganalisis dokumen audit untuk menentukan bidang ilmu yang sesuai.
+2. Menentukan Persentase Kecocokan (0-100) dan Kategori Jurnal yang Direkomendasikan.
+3. Melakukan Audit Akademik terhadap naskah (menentukan Skor Audit 0-100, Temuan Audit, dan Daftar Perbaikan).
+
+Aturan Penulisan Artikel:
+* Panjang minimal 8.000 kata.
+* Menggunakan bahasa akademik formal.
+* Struktur mengikuti standar jurnal terindeks Google Scholar.
+* Format kompatibel dengan DOI Crossref.
+* Wajib memiliki:
+  * Judul
+  * Abstrak Indonesia
+  * Kata Kunci
+  * Abstract English
+  * Keywords
+  * Pendahuluan
+  * Tinjauan Pustaka
+  * Metode Penelitian
+  * Hasil dan Pembahasan
+  * Implikasi Teoritis
+  * Implikasi Praktis
+  * Kesimpulan
+  * Saran
+  * Daftar Pustaka APA 7th
+
+Output harus siap dipublikasikan sebagai artikel jurnal ilmiah Standart Google Scholar dan Sinta.
 
 Data Audit:
 ${JSON.stringify(auditData, null, 2)}
