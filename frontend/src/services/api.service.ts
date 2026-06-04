@@ -388,20 +388,22 @@ Tolong keluarkan hasil dalam format JSON murni dengan struktur berikut persis:
     
     let prompt = '';
     if (articleType === 'academic') {
-      prompt = `Anda adalah Academic Journal Writer AI.
+      prompt = `Anda adalah Academic Journal Rewriter AI.
 
-Tugas Anda menghasilkan artikel ilmiah lengkap yang siap diterbitkan pada jurnal akademik nasional maupun internasional berdasarkan data audit di bawah ini.
+Tugas Anda KHUSUS untuk menyalin dan menulis ulang naskah dokumen menjadi artikel jurnal ilmiah berstandar Google Scholar dan SINTA.
+PENTING: JANGAN MELAKUKAN AUDIT. Tugas Anda BUKAN mengaudit, melainkan HANYA menulis ulang, menata struktur, dan merapikan tata bahasa agar memenuhi standar publikasi ilmiah sebenarnya.
 
-Selain menulis artikel, Anda juga harus:
-1. Menganalisis dokumen audit untuk menentukan bidang ilmu yang sesuai.
-2. Menentukan Persentase Kecocokan (0-100) dan Kategori Jurnal yang Direkomendasikan.
-3. Melakukan Audit Akademik terhadap naskah (menentukan Skor Audit 0-100, Temuan Audit, dan Daftar Perbaikan).
+Instruksi Utama:
+1. BACA dan PAHAMI dokumen sumber.
+2. TULIS ULANG dokumen sumber tersebut ke dalam format jurnal ilmiah yang sempurna.
+3. JANGAN mengubah makna, JANGAN menambah data fiktif, JANGAN mengurangi esensi isi. Hanya "copy-paste" dengan penyesuaian kalimat, struktur, dan diksi agar menjadi bahasa akademik formal yang sangat baik.
+4. BENAR-BENAR MEMPERHATIKAN FORMAT JURNAL SEBENARNYA DAN IKUTI STANDAR GOOGLE SCHOLAR DAN SINTA.
+5. Karena ini bukan audit, untuk kolom audit (auditScore, auditFindings, auditImprovements) cukup isi dengan teks singkat "Tidak dievaluasi (Mode Salin Jurnal)" atau skor 100 agar menghemat token. Fokuskan seluruh token Anda untuk isi artikel (content).
 
-Aturan Penulisan Artikel:
-* Panjang antara 4.000 - 5.000 kata (Maksimal batas aman token).
-* Menggunakan bahasa akademik formal.
-* Struktur mengikuti standar jurnal terindeks Google Scholar.
-* Format kompatibel dengan DOI Crossref.
+Aturan Penulisan Artikel (Content):
+* Panjang maksimal 4.000 - 5.000 kata (BATAS MAKSIMUM API TOKEN. Pastikan JSON ditutup sempurna dengan '}').
+* Menggunakan bahasa akademik formal tingkat tinggi.
+* Struktur WAJIB mengikuti standar jurnal terindeks Google Scholar & Sinta.
 * Wajib memiliki:
   * Judul
   * Abstrak Indonesia
@@ -412,14 +414,8 @@ Aturan Penulisan Artikel:
   * Tinjauan Pustaka
   * Metode Penelitian
   * Hasil dan Pembahasan
-  * Implikasi Teoritis
-  * Implikasi Praktis
   * Kesimpulan
-  * Saran
-  * Daftar Pustaka APA 7th
-
-Output harus siap dipublikasikan sebagai artikel jurnal ilmiah Standart Google Scholar dan Sinta.
-PENTING: JANGAN melewati batas panjang teks agar format JSON tidak terpotong. Pastikan JSON ditutup dengan sempurna ('}').
+  * Daftar Pustaka (APA 7th, rapikan dari dokumen sumber jika ada)
 
 Data Audit:
 ${JSON.stringify(auditData, null, 2)}
@@ -429,13 +425,13 @@ Tolong kembalikan respons dalam format JSON murni persis seperti ini:
   "title": "Judul asli dari data audit",
   "category": "Academic Journal",
   "headline": "Judul asli dari data audit",
-  "detectedField": "Nama bidang keilmuan yang terdeteksi secara otomatis (contoh: Hukum, Ilmu Komputer, Kedokteran, Sains, dll)",
-  "journalRecommendation": "Jurnal ...",
-  "matchPercentage": 94,
-  "auditScore": 85,
-  "auditFindings": "Markdown berisi Temuan Audit secara rinci (Struktur, Judul, Abstrak, dll.)",
-  "auditImprovements": "Markdown berisi Daftar Perbaikan secara rinci",
-  "content": "Isi lengkap artikel versi perbaikan dalam format Markdown yang terstruktur rapi dengan format jurnal ilmiah (Nama Penulis, Afiliasi, Email, Abstrak, Pendahuluan, Metode, Hasil, Pembahasan, Kesimpulan, Daftar Pustaka). Gunakan heading markdown yang sesuai.",
+  "detectedField": "Bidang ilmu jurnal",
+  "journalRecommendation": "Rekomendasi Jurnal",
+  "matchPercentage": 100,
+  "auditScore": 100,
+  "auditFindings": "Tidak dievaluasi (Mode Salin Jurnal)",
+  "auditImprovements": "Tidak dievaluasi (Mode Salin Jurnal)",
+  "content": "Isi lengkap tulisan ulang jurnal dalam format Markdown yang sangat panjang dan detail sesuai standar.",
   "tags": ["akademik", "jurnal"]
 }`;
     } else {
