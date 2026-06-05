@@ -674,178 +674,46 @@ export default function ArticleDetail({ profile }: { profile: UserProfile | null
           )}
           {article.type === 'academic' ? (
             <div className="space-y-8">
-              {/* Tab Selector */}
-              <div className="flex border-b border-gray-200 mb-8 no-print select-none">
-                <button
-                  onClick={() => setActiveTab('audit')}
-                  className={`flex-1 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
-                    activeTab === 'audit'
-                      ? 'border-red-600 text-red-600'
-                      : 'border-transparent text-gray-400 hover:text-black'
-                  }`}
-                >
-                  1. Hasil Audit & Bidang Ilmu
-                </button>
-                <button
-                  onClick={() => setActiveTab('article')}
-                  className={`flex-1 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
-                    activeTab === 'article'
-                      ? 'border-red-600 text-red-600'
-                      : 'border-transparent text-gray-400 hover:text-black'
-                  }`}
-                >
-                  2. Artikel Versi Perbaikan
-                </button>
+              {/* Artikel Versi Perbaikan (Academic Editor AI) */}
+              <div className="bg-gray-50/50 border border-gray-150 p-6 md:p-12 shadow-inner">
+                <div className="max-w-none font-serif text-justify text-gray-900 leading-relaxed select-text">
+                  {isEditing ? (
+                    <textarea
+                      value={editContent || ''}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full min-h-[500px] p-6 bg-white border border-gray-200 outline-none font-serif text-base leading-relaxed"
+                    />
+                  ) : (
+                    <div className="prose prose-red max-w-none">
+                      <ReactMarkdown>{ensureString(article.content)}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {activeTab === 'audit' ? (
-                <div className="space-y-8 select-none">
-                  {/* Identifikasi Otomatis Bidang Ilmu */}
-                  <div className="bg-red-50/20 border-2 border-red-900/10 p-6 md:p-8 rounded-sm shadow-sm">
-                    <div className="flex items-center space-x-3 text-red-600 mb-6">
-                      <Globe size={18} />
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.25em]">Identifikasi Otomatis Bidang Ilmu</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                      <div>
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Bidang Ilmu Terdeteksi</span>
-                        <span className="text-base font-black uppercase tracking-tight text-gray-900 leading-tight block">{article.detectedField || 'Hukum dan Keadilan'}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">Rekomendasi Kategori Jurnal</span>
-                        <span className="text-xs font-black uppercase tracking-widest text-red-700 bg-red-50 border border-red-200/50 px-3 py-1.5 inline-block">{article.journalRecommendation || 'Jurnal Hukum dan Keadilan'}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="relative w-12 h-12 rounded-full border-4 border-red-500/20 flex items-center justify-center font-mono font-black text-[11px] text-red-600 bg-white">
-                          {article.matchPercentage || 94}%
-                        </div>
-                        <div>
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block leading-none mb-1">Kecocokan</span>
-                          <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest leading-none">Tingkat Kompatibilitas</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Audit Akademik Score & Findings */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                    {/* Score Panel */}
-                    <div className="md:col-span-4 bg-gray-50 border border-gray-150 p-6 text-center flex flex-col justify-center items-center rounded-sm">
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-4">Skor Audit Akademik</span>
-                      <div className="relative inline-flex items-center justify-center mb-4">
-                        <svg className="w-24 h-24 transform -rotate-90">
-                          <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-200" />
-                          <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="8" fill="transparent" 
-                            strokeDasharray={264} 
-                            strokeDashoffset={264 - (264 * (article.auditScore || 0)) / 100}
-                            className={`transition-all duration-1000 ${
-                              (article.auditScore || 0) >= 90 ? 'text-green-500' : 
-                              (article.auditScore || 0) >= 80 ? 'text-blue-500' : 
-                              (article.auditScore || 0) >= 70 ? 'text-amber-500' : 'text-red-500'
-                            }`}
-                          />
-                        </svg>
-                        <span className="absolute text-2xl font-black italic">{article.auditScore || 0}</span>
-                      </div>
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 border rounded-full ${
-                        getScoreInfo(article.auditScore || 0).color
-                      }`}>
-                        {getScoreInfo(article.auditScore || 0).label}
-                      </span>
-                    </div>
-
-                    {/* Findings & Improvements Checklist */}
-                    <div className="md:col-span-8 space-y-6">
-                      <div className="bg-white border border-gray-100 p-6 shadow-sm">
-                        <div className="flex items-center space-x-2 text-red-600 mb-3 border-b pb-2">
-                          <ShieldCheck size={14} />
-                          <h4 className="text-[10px] font-black uppercase tracking-widest">Temuan Audit Akademik</h4>
-                        </div>
-                        <div className="prose prose-sm font-sans max-w-none text-gray-700 leading-relaxed max-h-48 overflow-y-auto pr-2">
-                          <ReactMarkdown>{article.auditFindings || 'Tidak ada temuan audit.'}</ReactMarkdown>
-                        </div>
-                      </div>
-
-                      <div className="bg-white border border-gray-100 p-6 shadow-sm">
-                        <div className="flex items-center space-x-2 text-green-600 mb-3 border-b pb-2">
-                          <CheckCircle2 size={14} />
-                          <h4 className="text-[10px] font-black uppercase tracking-widest">Rencana Tindak Perbaikan</h4>
-                        </div>
-                        <div className="prose prose-sm font-sans max-w-none text-gray-700 leading-relaxed max-h-48 overflow-y-auto pr-2">
-                          <ReactMarkdown>{article.auditImprovements || 'Tidak ada daftar perbaikan.'}</ReactMarkdown>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tab 1 Exports */}
-                  <div className="border-t border-gray-100 pt-8 flex flex-col sm:flex-row gap-4 justify-between items-center no-print">
-                    <div className="text-left">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-800">Export Laporan Audit</h4>
-                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mt-1">Unduh dokumen hasil audit komparatif.</p>
-                    </div>
-                    <div className="flex space-x-3 w-full sm:w-auto select-none">
-                      <button
-                        onClick={handleDownloadAuditDOC}
-                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-zinc-950 border border-zinc-800 text-white hover:bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
-                      >
-                        <FileText size={12} />
-                        <span>Export DOCX</span>
-                      </button>
-                      <button
-                        onClick={handlePrintAudit}
-                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-red-600 text-white hover:bg-red-700 px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
-                      >
-                        <Printer size={12} />
-                        <span>Export PDF</span>
-                      </button>
-                    </div>
-                  </div>
+              {/* Exports */}
+              <div className="border-t border-gray-100 pt-8 flex flex-col sm:flex-row gap-4 justify-between items-center no-print">
+                <div className="text-left">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-800">Export Naskah Jurnal</h4>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mt-1">Unduh hasil rewrite Academic Editor AI siap submit.</p>
                 </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Artikel Versi Perbaikan (Academic Editor AI) */}
-                  <div className="bg-gray-50/50 border border-gray-150 p-6 md:p-12 shadow-inner">
-                    <div className="max-w-none font-serif text-justify text-gray-900 leading-relaxed select-text">
-                      {isEditing ? (
-                        <textarea
-                          value={editContent || ''}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          className="w-full min-h-[500px] p-6 bg-white border border-gray-200 outline-none font-serif text-base leading-relaxed"
-                        />
-                      ) : (
-                        <div className="prose prose-red max-w-none">
-                          <ReactMarkdown>{ensureString(article.content)}</ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Tab 2 Exports */}
-                  <div className="border-t border-gray-100 pt-8 flex flex-col sm:flex-row gap-4 justify-between items-center no-print">
-                    <div className="text-left">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-800">Export Naskah Jurnal</h4>
-                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mt-1">Unduh hasil rewrite Academic Editor AI siap submit.</p>
-                    </div>
-                    <div className="flex space-x-3 w-full sm:w-auto select-none">
-                      <button
-                        onClick={handleDownloadArticleDOC}
-                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-zinc-950 border border-zinc-800 text-white hover:bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
-                      >
-                        <FileText size={12} />
-                        <span>Export DOCX</span>
-                      </button>
-                      <button
-                        onClick={handlePrintArticle}
-                        className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-red-600 text-white hover:bg-red-700 px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
-                      >
-                        <Printer size={12} />
-                        <span>Export PDF</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex space-x-3 w-full sm:w-auto select-none">
+                  <button
+                    onClick={handleDownloadArticleDOC}
+                    className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-zinc-950 border border-zinc-800 text-white hover:bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                  >
+                    <FileText size={12} />
+                    <span>Export DOCX</span>
+                  </button>
+                  <button
+                    onClick={handlePrintArticle}
+                    className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 bg-red-600 text-white hover:bg-red-700 px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                  >
+                    <Printer size={12} />
+                    <span>Export PDF</span>
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             <>
