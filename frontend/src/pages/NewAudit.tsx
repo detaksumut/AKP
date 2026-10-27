@@ -97,13 +97,19 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
   const navigate = useNavigate();
 
   const setExtractedInput = (data: any) => {
-    if (typeof data === 'string') {
-      setInput(data);
-    } else if (data && typeof data === 'object') {
-      setInput(data.content || data.text || data.extractedText || JSON.stringify(data));
-    } else {
+    const extracted = typeof data === 'string'
+      ? data
+      : [data?.content, data?.text, data?.extractedText]
+          .find((value) => typeof value === 'string' && value.trim().length > 0) || '';
+
+    if (!extracted.trim()) {
       setInput('');
+      setError('Dokumen berhasil dibuka, tetapi tidak ada teks yang terbaca. Jika PDF berupa scan, pastikan API Key Gemini tersedia di Pengaturan agar OCR dapat dijalankan.');
+      return;
     }
+
+    setInput(extracted.trim());
+    setError('');
   };
 
   const handleUrlFetch = async () => {
@@ -145,7 +151,7 @@ export default function NewAudit({ profile }: { profile: UserProfile }) {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
-    if (selectedFile.type !== 'application/pdf') {
+    if (selectedFile.type !== 'application/pdf' && !selectedFile.name.toLowerCase().endsWith('.pdf')) {
       setError('Hanya file PDF yang didukung.');
       return;
     }
