@@ -474,23 +474,132 @@ Tolong kembalikan respons dalam format JSON murni persis seperti ini:
   }
 
   static async extractPdf(file: File) {
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      throw new Error('Format file tidak valid. Pilih dokumen PDF.');
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      throw new Error('Ukuran PDF melebihi 100 MB. Kompres dokumen terlebih dahulu.');
+    }
+
+    let pdf: any;
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-      let fullText = '';
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\n\n';
-      }
-      
-      return { content: fullText.trim() };
+      pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     } catch (e: any) {
-      console.error('PDF Extraction Error:', e);
-      throw new Error('Gagal membaca PDF: ' + e.message);
+      console.error('PDF Open Error:', e);
+      throw new Error('PDF tidak dapat dibuka. Pastikan file tidak rusak atau terkunci kata sandi.');
     }
+
+    const apiKey = localStorage.getItem('GEMINI_API_KEY');
+    const pageTexts: string[] = [];
+    const pagesNeedingOcr: number[] = [];
+    const maxOcrPages = 50;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => typeof item.str === 'string' ? item.str : '')
+        .join(' ')
+        .replace(/\\s+/g, ' ')
+        .trim();
+
+      if (pageText.replace(/\\s/g, '').length >= 20) {
+        pageTexts[i - 1] = pageText;
+        continue;
+      }
+
+      // Image-only/scanned pages have no usable text layer; render them for OCR below.
+      pageTexts[i - 1] = '';
+      pagesNeedingOcr.push(i);
+    }
+
+    if (pagesNeedingOcr.length > 0 && (!apiKey || apiKey === 'TEST')) {
+      throw new Error(
+        `PDF berisi halaman scan/gambar tanpa teks yang bisa disalin (halaman ${pagesNeedingOcr.slice(0, 8).join(', ')}${pagesNeedingOcr.length > 8 ? ', ...' : ''}). Aktifkan API Key Gemini di Pengaturan agar OCR dapat membaca halaman tersebut, lalu unggah ulang.`
+      );
+    }
+
+    if (pagesNeedingOcr.length > maxOcrPages) {
+      throw new Error(
+        `Ditemukan ${pagesNeedingOcr.length} halaman scan. Batas OCR otomatis saat ini ${maxOcrPages} halaman per dokumen. Pisahkan PDF menjadi beberapa file dan unggah kembali.`
+      );
+    }
+
+    for (const pageNumber of pagesNeedingOcr) {
+      const page = await pdf.getPage(pageNumber);
+      const viewport = page.getViewport({ scale: 1.6 });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error(`Tidak dapat menyiapkan gambar untuk OCR pada halaman ${pageNumber}.`);
+      }
+
+      try {
+        await page.render({ canvasContext: context, viewport }).promise;
+        const imageData = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey!)}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  {
+                    text: `OCR dokumen audit. Salin seluruh teks yang benar-benar terlihat pada gambar halaman ${pageNumber}. Pertahankan angka, tanggal, nomor surat, tabel, dan urutan baris sebisa mungkin. Jangan meringkas, jangan menebak teks yang tidak terbaca. Jika tidak ada teks, jawab [TIDAK ADA TEKS TERBACA].`
+                  },
+                  { inlineData: { mimeType: 'image/jpeg', data: imageData } }
+                ]
+              }],
+              generationConfig: { temperature: 0.1 }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const detail = await response.text().catch(() => '');
+          console.error('PDF OCR API Error:', response.status, detail);
+          throw new Error(
+            response.status === 401 || response.status === 403
+              ? 'API Key Gemini ditolak saat OCR. Periksa API Key di Pengaturan.'
+              : response.status === 429
+                ? 'Batas permintaan OCR Gemini tercapai. Tunggu sebentar lalu coba lagi.'
+                : `Layanan OCR gagal (HTTP ${response.status}). Periksa koneksi dan konfigurasi API Gemini.`
+          );
+        }
+
+        const result = await response.json();
+        const ocrText = result.candidates?.[0]?.content?.parts
+          ?.map((part: any) => part.text || '')
+          .join(' ')
+          .trim();
+
+        if (ocrText && ocrText !== '[TIDAK ADA TEKS TERBACA]') {
+          pageTexts[pageNumber - 1] = ocrText;
+        }
+      } finally {
+        // Release the large rendered page bitmap after each OCR request.
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+    }
+
+    const fullText = pageTexts
+      .map((text, index) => text?.trim() ? `[Halaman ${index + 1}]\\n${text.trim()}` : '')
+      .filter(Boolean)
+      .join('\\n\\n')
+      .trim();
+
+    if (!fullText) {
+      throw new Error(
+        'Tidak ada teks yang berhasil dibaca dari PDF. Jika dokumen berupa scan, pastikan teks cukup jelas dan API Key Gemini tersedia di Pengaturan.'
+      );
+    }
+
+    return { content: fullText, pageCount: pdf.numPages, ocrPages: pagesNeedingOcr.length };
   }
 
   static async extractImage(file: File) {
